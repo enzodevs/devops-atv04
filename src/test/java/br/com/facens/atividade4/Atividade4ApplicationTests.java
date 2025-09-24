@@ -2,6 +2,7 @@ package br.com.facens.atividade4;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 class Atividade4ApplicationTests {
@@ -20,14 +21,13 @@ class Atividade4ApplicationTests {
 		assertEquals(cursosEsperados, aluno.getCursosDisponiveis());
 	}
 		
-	@Test 
+	@Test
 	public void naoDeveConcederCursosParaAlunoComMediaInsuficiente() {
 		Aluno aluno = new Aluno("ASSINATURA_BASICA");
 		int cursosIniciais = aluno.getCursosDisponiveis();
 		ServicoDeCursos servico = new ServicoDeCursos();
 		servico.finalizarCurso(aluno, 6.9);
-		int cursosEsperados = cursosIniciais + 3;
-		assertEquals(cursosEsperados, aluno.getCursosDisponiveis());
+		assertEquals(cursosIniciais, aluno.getCursosDisponiveis());
 	}
 	
 	@Test 
