@@ -1,0 +1,6 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+atividade4,br.com.facens.atividade4.domain,TipoAssinatura,0,38,0,0,0,10,0,4,0,4
+atividade4,br.com.facens.atividade4.domain,RegraGamificacao,3,15,0,4,1,2,1,4,1,2
+atividade4,br.com.facens.atividade4.domain,Aluno,0,44,0,2,0,15,0,7,0,6
+atividade4,br.com.facens.atividade4,Atividade4Application,5,3,0,0,2,1,1,1,1,1
+atividade4,br.com.facens.atividade4.service,ServicoDeCursos,0,41,1,9,0,11,1,7,0,3
