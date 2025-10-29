@@ -1,10 +1,15 @@
 package br.com.facens.atividade4.service;
 
-import br.com.facens.atividade4.domain.Aluno;
-import br.com.facens.atividade4.domain.TipoAssinatura;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+import br.com.facens.atividade4.domain.Aluno;
+import br.com.facens.atividade4.domain.ContatoEmail;
+import br.com.facens.atividade4.domain.TipoAssinatura;
 
 class ServicoDeCursosTest {
 
@@ -17,7 +22,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveAdicionarCursosBonusParaAlunoAprovado() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "aprovado@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 8.0);
@@ -27,7 +32,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveAdicionarCursosBonusParaNotaLimite() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_PREMIUM, "limite@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 7.0);
@@ -37,7 +42,7 @@ class ServicoDeCursosTest {
 
     @Test
     void naoDeveAdicionarCursosBonusParaAlunoReprovado() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "reprovado@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 6.9);
@@ -47,7 +52,7 @@ class ServicoDeCursosTest {
 
     @Test
     void naoDeveAdicionarCursosBonusParaNotaZero() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_PREMIUM, "nota.zero@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 0.0);
@@ -57,7 +62,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveAdicionarCursosBonusParaNotaMaxima() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "nota.maxima@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 10.0);
@@ -77,7 +82,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveLancarExcecaoParaNotaNegativa() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "nota.negativa@example.com");
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -89,7 +94,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveLancarExcecaoParaNotaAcimaDoDez() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_PREMIUM, "nota.acima@example.com");
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -101,7 +106,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveLancarExcecaoParaNotaMuitoAlta() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "nota.alta@example.com");
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -113,7 +118,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveProcessarMultiplosCursosParaMesmoAluno() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "multiplos@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 8.0);
@@ -124,7 +129,7 @@ class ServicoDeCursosTest {
 
     @Test
     void deveProcessarMisturaDeCursosAprovadosEReprovados() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_PREMIUM, "mistura@example.com");
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         servico.finalizarCurso(aluno, 8.0);  // +3 cursos
@@ -136,8 +141,8 @@ class ServicoDeCursosTest {
 
     @Test
     void deveVerificarQueAlunoSemprePodeReceberBonus() {
-        Aluno alunoBasico = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
-        Aluno alunoPremium = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno alunoBasico = novoAluno(TipoAssinatura.ASSINATURA_BASICA, "bonus.basico@example.com");
+        Aluno alunoPremium = novoAluno(TipoAssinatura.ASSINATURA_PREMIUM, "bonus.premium@example.com");
         int cursosBasicoIniciais = alunoBasico.getCursosDisponiveis();
         int cursosPremiumIniciais = alunoPremium.getCursosDisponiveis();
 
@@ -152,11 +157,15 @@ class ServicoDeCursosTest {
 
     @Test
     void deveManterTipoAssinaturaAposFinalizarCurso() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno aluno = novoAluno(TipoAssinatura.ASSINATURA_PREMIUM, "tipo.manter@example.com");
         TipoAssinatura tipoOriginal = aluno.getTipoAssinatura();
 
         servico.finalizarCurso(aluno, 8.5);
 
         assertEquals(tipoOriginal, aluno.getTipoAssinatura());
+    }
+
+    private Aluno novoAluno(TipoAssinatura tipoAssinatura, String email) {
+        return Aluno.novo("Aluno " + tipoAssinatura.name(), ContatoEmail.of(email), tipoAssinatura);
     }
 }

@@ -1,88 +1,116 @@
 package br.com.facens.atividade4.domain;
 
+import java.util.Objects;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
 /**
  * Representa um aluno no sistema de cursos.
- * Cada aluno possui um tipo de assinatura e um número de cursos disponíveis.
+ * Cada aluno possui identidade, contato e assinatura que definem seu plano.
  */
+@Getter
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(name = "tb_aluno")
 public class Aluno {
     private static final String ERRO_QUANTIDADE_NEGATIVA = "Quantidade de cursos não pode ser negativa";
 
-    private final TipoAssinatura tipoAssinatura;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    private Long id;
+
+    @Column(nullable = false, length = 120)
+    private String nome;
+
+    @Embedded
+    private ContatoEmail contatoEmail;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private TipoAssinatura tipoAssinatura;
+
+    @Column(nullable = false)
     private int cursosDisponiveis;
 
-    /**
-     * Constrói um aluno a partir de uma string representando o tipo de assinatura.
-     *
-     * @param tipoAssinatura string representando o tipo de assinatura
-     */
-    public Aluno(String tipoAssinatura) {
-        this(TipoAssinatura.fromString(tipoAssinatura));
+    @Builder
+    private Aluno(Long id,
+                  String nome,
+                  ContatoEmail contatoEmail,
+                  TipoAssinatura tipoAssinatura,
+                  Integer cursosDisponiveis) {
+        this.id = id;
+        this.nome = validarNome(nome);
+        this.contatoEmail = Objects.requireNonNull(contatoEmail, "Contato do aluno é obrigatório");
+        this.tipoAssinatura = Objects.requireNonNull(tipoAssinatura, "Tipo de assinatura é obrigatório");
+        this.cursosDisponiveis = cursosDisponiveis != null
+                ? validarCursosNaoNegativos(cursosDisponiveis)
+                : this.tipoAssinatura.getCursosIniciais();
     }
 
-    /**
-     * Constrói um aluno com um tipo de assinatura específico.
-     *
-     * @param tipoAssinatura o tipo de assinatura do aluno
-     */
-    public Aluno(TipoAssinatura tipoAssinatura) {
-        this.tipoAssinatura = tipoAssinatura;
-        inicializarCursosDisponiveis();
+    public static Aluno novo(String nome, ContatoEmail contatoEmail, TipoAssinatura tipoAssinatura) {
+        return Aluno.builder()
+                .nome(nome)
+                .contatoEmail(contatoEmail)
+                .tipoAssinatura(tipoAssinatura)
+                .build();
     }
 
-    public int getCursosDisponiveis() {
-        return cursosDisponiveis;
+    public void atualizarDados(String nome, ContatoEmail contatoEmail, TipoAssinatura tipoAssinatura) {
+        this.nome = validarNome(nome);
+        this.contatoEmail = Objects.requireNonNull(contatoEmail, "Contato do aluno é obrigatório");
+        this.tipoAssinatura = Objects.requireNonNull(tipoAssinatura, "Tipo de assinatura é obrigatório");
     }
 
-    /**
-     * Adiciona uma quantidade de cursos aos cursos disponíveis do aluno.
-     *
-     * @param quantidade a quantidade de cursos a ser adicionada (não pode ser negativa)
-     * @throws IllegalArgumentException se a quantidade for negativa
-     */
     public void adicionarCursos(int quantidade) {
         validarQuantidadeCursos(quantidade);
         incrementarCursosDisponiveis(quantidade);
     }
 
-    public TipoAssinatura getTipoAssinatura() {
-        return tipoAssinatura;
-    }
-
-    /**
-     * Verifica se o aluno pode receber bônus de cursos.
-     *
-     * @return sempre true, pois todos os alunos podem receber bônus
-     */
     public boolean podeReceberBonus() {
         return true;
     }
 
-    /**
-     * Inicializa a quantidade de cursos disponíveis baseada no tipo de assinatura.
-     */
-    private void inicializarCursosDisponiveis() {
-        this.cursosDisponiveis = this.tipoAssinatura.getCursosIniciais();
+    private static String validarNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Nome do aluno é obrigatório");
+        }
+        return nome;
     }
 
-    /**
-     * Valida se a quantidade de cursos é válida (não negativa).
-     */
     private void validarQuantidadeCursos(int quantidade) {
         if (isQuantidadeNegativa(quantidade)) {
             throw new IllegalArgumentException(ERRO_QUANTIDADE_NEGATIVA);
         }
     }
 
-    /**
-     * Verifica se a quantidade é negativa.
-     */
     private boolean isQuantidadeNegativa(int quantidade) {
         return quantidade < 0;
     }
 
-    /**
-     * Incrementa a quantidade de cursos disponíveis.
-     */
+    private int validarCursosNaoNegativos(int quantidade) {
+        if (quantidade < 0) {
+            throw new IllegalArgumentException(ERRO_QUANTIDADE_NEGATIVA);
+        }
+        return quantidade;
+    }
+
     private void incrementarCursosDisponiveis(int quantidade) {
         this.cursosDisponiveis += quantidade;
     }

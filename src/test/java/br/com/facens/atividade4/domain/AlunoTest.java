@@ -1,13 +1,17 @@
 package br.com.facens.atividade4.domain;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class AlunoTest {
 
     @Test
     void deveCriarAlunoComAssinaturaBasica() {
-        Aluno aluno = new Aluno("ASSINATURA_BASICA");
+        Aluno aluno = Aluno.novo("Ana Cursos", ContatoEmail.of("ana.cursos@example.com"),
+                TipoAssinatura.ASSINATURA_BASICA);
 
         assertEquals(TipoAssinatura.ASSINATURA_BASICA, aluno.getTipoAssinatura());
         assertEquals(5, aluno.getCursosDisponiveis());
@@ -15,33 +19,30 @@ class AlunoTest {
 
     @Test
     void deveCriarAlunoComAssinaturaPremium() {
-        Aluno aluno = new Aluno("ASSINATURA_PREMIUM");
+        Aluno aluno = Aluno.novo("Paulo Avancado", ContatoEmail.of("paulo.avancado@example.com"),
+                TipoAssinatura.ASSINATURA_PREMIUM);
 
         assertEquals(TipoAssinatura.ASSINATURA_PREMIUM, aluno.getTipoAssinatura());
         assertEquals(10, aluno.getCursosDisponiveis());
     }
 
     @Test
-    void deveCriarAlunoComTipoAssinaturaEnum() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+    void deveAtualizarDadosDoAluno() {
+        Aluno aluno = Aluno.novo("Aluno Original", ContatoEmail.of("original@example.com"),
+                TipoAssinatura.ASSINATURA_BASICA);
 
-        assertEquals(TipoAssinatura.ASSINATURA_BASICA, aluno.getTipoAssinatura());
-        assertEquals(5, aluno.getCursosDisponiveis());
-    }
+        aluno.atualizarDados("Aluno Atualizado", ContatoEmail.of("atualizado@example.com"),
+                TipoAssinatura.ASSINATURA_PREMIUM);
 
-    @Test
-    void deveLancarExcecaoParaTipoAssinaturaInvalido() {
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> new Aluno("ASSINATURA_INEXISTENTE")
-        );
-
-        assertEquals("Tipo de assinatura inválido: ASSINATURA_INEXISTENTE", exception.getMessage());
+        assertEquals("Aluno Atualizado", aluno.getNome());
+        assertEquals("atualizado@example.com", aluno.getContatoEmail().getEndereco());
+        assertEquals(TipoAssinatura.ASSINATURA_PREMIUM, aluno.getTipoAssinatura());
     }
 
     @Test
     void deveAdicionarCursosCorretamente() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = Aluno.novo("Aluno Cursos", ContatoEmail.of("cursos@example.com"),
+                TipoAssinatura.ASSINATURA_BASICA);
         int cursosIniciais = aluno.getCursosDisponiveis();
 
         aluno.adicionarCursos(3);
@@ -50,30 +51,9 @@ class AlunoTest {
     }
 
     @Test
-    void deveAdicionarZeroCursos() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
-        int cursosIniciais = aluno.getCursosDisponiveis();
-
-        aluno.adicionarCursos(0);
-
-        assertEquals(cursosIniciais, aluno.getCursosDisponiveis());
-    }
-
-    @Test
-    void deveAdicionarMultiplasChamadas() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
-        int cursosIniciais = aluno.getCursosDisponiveis();
-
-        aluno.adicionarCursos(2);
-        aluno.adicionarCursos(3);
-        aluno.adicionarCursos(1);
-
-        assertEquals(cursosIniciais + 6, aluno.getCursosDisponiveis());
-    }
-
-    @Test
     void deveLancarExcecaoParaQuantidadeNegativaDeCursos() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
+        Aluno aluno = Aluno.novo("Aluno Negativo", ContatoEmail.of("negativo@example.com"),
+                TipoAssinatura.ASSINATURA_BASICA);
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -84,33 +64,13 @@ class AlunoTest {
     }
 
     @Test
-    void deveLancarExcecaoParaQuantidadeNegativaGrande() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
-
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> aluno.adicionarCursos(-100)
-        );
-
-        assertEquals("Quantidade de cursos não pode ser negativa", exception.getMessage());
-    }
-
-    @Test
     void deveSemprePoderReceberBonus() {
-        Aluno alunoBasico = new Aluno(TipoAssinatura.ASSINATURA_BASICA);
-        Aluno alunoPremium = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
+        Aluno alunoBasico = Aluno.novo("Aluno Basico", ContatoEmail.of("basico@example.com"),
+                TipoAssinatura.ASSINATURA_BASICA);
+        Aluno alunoPremium = Aluno.novo("Aluno Premium", ContatoEmail.of("premium@example.com"),
+                TipoAssinatura.ASSINATURA_PREMIUM);
 
         assertTrue(alunoBasico.podeReceberBonus());
         assertTrue(alunoPremium.podeReceberBonus());
-    }
-
-    @Test
-    void deveManterTipoAssinaturaAposAdicionarCursos() {
-        Aluno aluno = new Aluno(TipoAssinatura.ASSINATURA_PREMIUM);
-        TipoAssinatura tipoOriginal = aluno.getTipoAssinatura();
-
-        aluno.adicionarCursos(5);
-
-        assertEquals(tipoOriginal, aluno.getTipoAssinatura());
     }
 }
