@@ -4,10 +4,13 @@ package br.com.facens.atividade4.domain;
  * Classe responsável pelas regras de gamificação do sistema de cursos.
  * Define critérios de aprovação e cálculo de bônus para alunos.
  */
-public class RegraGamificacao {
+public final class RegraGamificacao {
     private static final double NOTA_MINIMA_APROVACAO = 7.0;
     private static final int CURSOS_BONUS_APROVACAO = 3;
     private static final int CURSOS_BONUS_REPROVACAO = 0;
+
+    private RegraGamificacao() {
+    }
 
     /**
      * Verifica se um aluno foi aprovado baseado em sua nota.

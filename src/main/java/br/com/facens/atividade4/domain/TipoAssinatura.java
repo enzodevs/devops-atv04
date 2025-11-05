@@ -18,7 +18,7 @@ public enum TipoAssinatura {
         try {
             return TipoAssinatura.valueOf(tipo);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Tipo de assinatura inválido: " + tipo);
+            throw new IllegalArgumentException("Tipo de assinatura inválido: " + tipo, e);
         }
     }
 }

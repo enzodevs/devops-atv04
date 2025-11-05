@@ -64,6 +64,16 @@ class AlunoTest {
     }
 
     @Test
+    void deveLancarExcecaoQuandoCursosIniciaisNegativos() {
+        assertThrows(IllegalArgumentException.class, () -> Aluno.builder()
+                .nome("Aluno Invalido")
+                .contatoEmail(ContatoEmail.of("invalido@example.com"))
+                .tipoAssinatura(TipoAssinatura.ASSINATURA_BASICA)
+                .cursosDisponiveis(-5)
+                .build());
+    }
+
+    @Test
     void deveSemprePoderReceberBonus() {
         Aluno alunoBasico = Aluno.novo("Aluno Basico", ContatoEmail.of("basico@example.com"),
                 TipoAssinatura.ASSINATURA_BASICA);
@@ -73,4 +83,44 @@ class AlunoTest {
         assertTrue(alunoBasico.podeReceberBonus());
         assertTrue(alunoPremium.podeReceberBonus());
     }
+
+    @Test
+    void deveCriarAlunoComCursosPersonalizados() {
+        Aluno aluno = Aluno.builder()
+                .id(99L)
+                .nome("Aluno Personalizado")
+                .contatoEmail(ContatoEmail.of("personalizado@example.com"))
+                .tipoAssinatura(TipoAssinatura.ASSINATURA_PREMIUM)
+                .cursosDisponiveis(15)
+                .build();
+
+        assertEquals(99L, aluno.getId());
+        assertEquals(15, aluno.getCursosDisponiveis());
+        assertEquals("Aluno Personalizado", aluno.getNome());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoNomeForInvalido() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> Aluno.builder()
+                        .nome("   ")
+                        .contatoEmail(ContatoEmail.of("nome.invalido@example.com"))
+                        .tipoAssinatura(TipoAssinatura.ASSINATURA_BASICA)
+                        .build());
+
+        assertEquals("Nome do aluno é obrigatório", exception.getMessage());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoNomeForNulo() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> Aluno.builder()
+                        .nome(null)
+                        .contatoEmail(ContatoEmail.of("nome.nulo@example.com"))
+                        .tipoAssinatura(TipoAssinatura.ASSINATURA_BASICA)
+                        .build());
+
+        assertEquals("Nome do aluno é obrigatório", exception.getMessage());
+    }
+
 }

@@ -1,11 +1,14 @@
 package br.com.facens.atividade4.service;
 
+import org.springframework.stereotype.Service;
+
 import br.com.facens.atividade4.domain.Aluno;
 import br.com.facens.atividade4.domain.RegraGamificacao;
 
 /**
- * Serviço responsável pela gestão de cursos e aplicação de regras de gamificação.
+ * Serviço responsável pelas regras de gamificação aplicadas aos cursos.
  */
+@Service
 public class ServicoDeCursos {
     private static final double NOTA_MINIMA = 0.0;
     private static final double NOTA_MAXIMA = 10.0;

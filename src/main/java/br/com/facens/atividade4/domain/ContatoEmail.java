@@ -1,5 +1,6 @@
 package br.com.facens.atividade4.domain;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -24,19 +25,20 @@ public class ContatoEmail {
     private String endereco;
 
     private ContatoEmail(String endereco) {
-        this.endereco = validar(endereco);
+        this.endereco = endereco;
     }
 
     public static ContatoEmail of(String endereco) {
-        return new ContatoEmail(endereco);
+        String emailValidado = validar(endereco);
+        return new ContatoEmail(emailValidado);
     }
 
-    private String validar(String valor) {
+    private static String validar(String valor) {
         String email = Objects.requireNonNull(valor, "Email é obrigatório").trim();
         if (email.isEmpty() || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new IllegalArgumentException("Email inválido");
         }
-        return email.toLowerCase();
+        return email.toLowerCase(Locale.ROOT);
     }
 
     @Override

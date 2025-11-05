@@ -49,19 +49,32 @@ public class Aluno {
     @Column(nullable = false)
     private int cursosDisponiveis;
 
-    @Builder
     private Aluno(Long id,
                   String nome,
                   ContatoEmail contatoEmail,
                   TipoAssinatura tipoAssinatura,
-                  Integer cursosDisponiveis) {
+                  int cursosDisponiveis) {
         this.id = id;
-        this.nome = validarNome(nome);
-        this.contatoEmail = Objects.requireNonNull(contatoEmail, "Contato do aluno é obrigatório");
-        this.tipoAssinatura = Objects.requireNonNull(tipoAssinatura, "Tipo de assinatura é obrigatório");
-        this.cursosDisponiveis = cursosDisponiveis != null
+        this.nome = nome;
+        this.contatoEmail = contatoEmail;
+        this.tipoAssinatura = tipoAssinatura;
+        this.cursosDisponiveis = cursosDisponiveis;
+    }
+
+    @Builder(builderMethodName = "builder")
+    private static Aluno construir(Long id,
+                                   String nome,
+                                   ContatoEmail contatoEmail,
+                                   TipoAssinatura tipoAssinatura,
+                                   Integer cursosDisponiveis) {
+        String nomeValidado = validarNome(nome);
+        ContatoEmail contatoValidado = Objects.requireNonNull(contatoEmail, "Contato do aluno é obrigatório");
+        TipoAssinatura assinaturaValidada = Objects.requireNonNull(tipoAssinatura, "Tipo de assinatura é obrigatório");
+        int cursosValidados = cursosDisponiveis != null
                 ? validarCursosNaoNegativos(cursosDisponiveis)
-                : this.tipoAssinatura.getCursosIniciais();
+                : assinaturaValidada.getCursosIniciais();
+
+        return new Aluno(id, nomeValidado, contatoValidado, assinaturaValidada, cursosValidados);
     }
 
     public static Aluno novo(String nome, ContatoEmail contatoEmail, TipoAssinatura tipoAssinatura) {
@@ -104,7 +117,7 @@ public class Aluno {
         return quantidade < 0;
     }
 
-    private int validarCursosNaoNegativos(int quantidade) {
+    private static int validarCursosNaoNegativos(int quantidade) {
         if (quantidade < 0) {
             throw new IllegalArgumentException(ERRO_QUANTIDADE_NEGATIVA);
         }
