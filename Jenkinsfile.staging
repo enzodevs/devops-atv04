@@ -17,7 +17,7 @@ pipeline {
         stage('Stop Previous Container') {
             steps {
                 echo '========== Parando container anterior =========='
-                bat 'docker-compose -f docker-compose.staging.yml down || echo "Nenhum container anterior para parar"'
+                sh 'docker-compose -f docker-compose.staging.yml down || echo "Nenhum container anterior para parar"'
             }
         }
 
@@ -27,21 +27,21 @@ pipeline {
                 echo "Usando imagem: ${DOCKER_IMAGE}:${DOCKER_TAG}"
 
                 // Baixa a imagem mais recente (se estiver usando um registry)
-                // bat "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
+                // sh "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
 
                 // Inicia o container usando docker-compose
-                bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+                sh 'docker-compose -f docker-compose.staging.yml up -d --no-color'
 
                 // Aguarda o serviço Spring Boot inicializar
                 sleep time: 60, unit: 'SECONDS'
 
                 // Verifica os logs para conferir o status
                 echo '========== Verificando logs do container =========='
-                bat 'docker-compose -f docker-compose.staging.yml logs --tail=50'
+                sh 'docker-compose -f docker-compose.staging.yml logs --tail=50'
 
                 // Verifica o status do container
                 echo '========== Status do container =========='
-                bat 'docker-compose -f docker-compose.staging.yml ps'
+                sh 'docker-compose -f docker-compose.staging.yml ps'
             }
         }
 
@@ -55,7 +55,7 @@ pipeline {
 
                     while (retryCount < maxRetries && !healthy) {
                         try {
-                            bat 'curl -f http://localhost:8686/actuator/health'
+                            sh 'curl -f http://localhost:8686/actuator/health'
                             healthy = true
                             echo 'Serviço está saudável!'
                         } catch (Exception e) {
@@ -79,8 +79,8 @@ pipeline {
                 echo '========== Executando testes básicos =========='
 
                 // Testa endpoints principais
-                bat 'curl http://localhost:8686/api/alunos || echo "Endpoint alunos não respondeu"'
-                bat 'curl http://localhost:8686/swagger-ui.html || echo "Swagger UI não disponível"'
+                sh 'curl http://localhost:8686/api/alunos || echo "Endpoint alunos não respondeu"'
+                sh 'curl http://localhost:8686/swagger-ui.html || echo "Swagger UI não disponível"'
 
                 echo 'Testes de fumaça completados'
             }
@@ -93,7 +93,7 @@ pipeline {
             echo "Status: ${currentBuild.currentResult}"
 
             // Mostra informações do container
-            bat 'docker ps --filter "name=atividade4-staging" --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" || echo "Container info não disponível"'
+            sh 'docker ps --filter "name=atividade4-staging" --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" || echo "Container info não disponível"'
         }
         success {
             echo '✅ Deploy em Staging realizado com sucesso!'
@@ -104,7 +104,7 @@ pipeline {
             echo '❌ Deploy em Staging falhou - verificar logs'
 
             // Captura logs detalhados em caso de falha
-            bat 'docker-compose -f docker-compose.staging.yml logs --tail=100 > staging-failure-logs.txt 2>&1'
+            sh 'docker-compose -f docker-compose.staging.yml logs --tail=100 > staging-failure-logs.txt 2>&1'
             archiveArtifacts artifacts: 'staging-failure-logs.txt', allowEmptyArchive: true
         }
     }

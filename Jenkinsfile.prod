@@ -25,7 +25,7 @@ pipeline {
         stage('Stop Previous Container') {
             steps {
                 echo '========== Parando container anterior de produção =========='
-                bat 'docker-compose -f docker-compose.prod.yml down || echo "Nenhum container anterior para parar"'
+                sh 'docker-compose -f docker-compose.prod.yml down || echo "Nenhum container anterior para parar"'
             }
         }
 
@@ -34,7 +34,7 @@ pipeline {
                 echo '========== Criando backup do estado atual =========='
                 script {
                     // Marca a imagem atual como backup antes de atualizar
-                    bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:backup-${BUILD_NUMBER} || echo 'Sem imagem anterior para backup'"
+                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:backup-${BUILD_NUMBER} || echo 'Sem imagem anterior para backup'"
                 }
             }
         }
@@ -45,21 +45,21 @@ pipeline {
                 echo "Usando imagem: ${DOCKER_IMAGE}:${DOCKER_TAG}"
 
                 // Baixa a imagem mais recente (se estiver usando um registry)
-                // bat "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
+                // sh "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
 
                 // Inicia o container usando docker-compose
-                bat 'docker-compose -f docker-compose.prod.yml up -d --no-color'
+                sh 'docker-compose -f docker-compose.prod.yml up -d --no-color'
 
                 // Aguarda o serviço Spring Boot inicializar
                 sleep time: 60, unit: 'SECONDS'
 
                 // Verifica os logs para conferir o status
                 echo '========== Verificando logs do container =========='
-                bat 'docker-compose -f docker-compose.prod.yml logs --tail=50'
+                sh 'docker-compose -f docker-compose.prod.yml logs --tail=50'
 
                 // Verifica o status do container
                 echo '========== Status do container =========='
-                bat 'docker-compose -f docker-compose.prod.yml ps'
+                sh 'docker-compose -f docker-compose.prod.yml ps'
             }
         }
 
@@ -73,7 +73,7 @@ pipeline {
 
                     while (retryCount < maxRetries && !healthy) {
                         try {
-                            bat 'curl -f http://localhost:8585/actuator/health'
+                            sh 'curl -f http://localhost:8585/actuator/health'
                             healthy = true
                             echo '✅ Serviço em produção está saudável!'
                         } catch (Exception e) {
@@ -107,7 +107,7 @@ pipeline {
 
                     endpoints.each { endpoint ->
                         try {
-                            bat "curl -f http://localhost:8585${endpoint}"
+                            sh "curl -f http://localhost:8585${endpoint}"
                             echo "✅ Endpoint ${endpoint} OK"
                         } catch (Exception e) {
                             echo "⚠️ Endpoint ${endpoint} não respondeu"
@@ -124,15 +124,15 @@ pipeline {
                 echo '========== Verificando performance básica =========='
                 script {
                     // Teste simples de latência
-                    def responseTime = bat(
-                        script: 'curl -o nul -s -w "%%{time_total}" http://localhost:8585/actuator/health',
+                    def responseTime = sh(
+                        script: 'curl -o /dev/null -s -w "%{time_total}" http://localhost:8585/actuator/health',
                         returnStdout: true
                     ).trim()
 
                     echo "Tempo de resposta: ${responseTime} segundos"
 
                     // Verifica uso de memória do container
-                    bat 'docker stats --no-stream --format "table {{.Container}}\\t{{.CPUPerc}}\\t{{.MemUsage}}" atividade4-prod'
+                    sh 'docker stats --no-stream --format "table {{.Container}}\\t{{.CPUPerc}}\\t{{.MemUsage}}" atividade4-prod'
                 }
             }
         }
@@ -144,7 +144,7 @@ pipeline {
             echo "Status: ${currentBuild.currentResult}"
 
             // Mostra informações do container
-            bat 'docker ps --filter "name=atividade4-prod" --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" || echo "Container info não disponível"'
+            sh 'docker ps --filter "name=atividade4-prod" --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" || echo "Container info não disponível"'
         }
         success {
             echo '✅ Deploy em PRODUÇÃO realizado com sucesso!'
@@ -153,14 +153,14 @@ pipeline {
             echo '🔍 Monitoramento: http://localhost:8585/actuator'
 
             // Limpa imagens de backup antigas (mantém apenas as últimas 3)
-            bat 'for /f "skip=3" %%i in (\'docker images --filter "reference=facens/atividade4:backup-*" --format "{{.Tag}}" ^| sort /r\') do docker rmi facens/atividade4:%%i 2>nul'
+            sh 'docker images --filter "reference=facens/atividade4:backup-*" --format "{{.Tag}}" | sort -r | tail -n +4 | xargs -I {} docker rmi facens/atividade4:{} 2>/dev/null || true'
         }
         failure {
             echo '❌ Deploy em PRODUÇÃO falhou!'
             echo '🔄 Considere fazer rollback para versão anterior'
 
             // Captura logs detalhados em caso de falha
-            bat 'docker-compose -f docker-compose.prod.yml logs --tail=200 > production-failure-logs.txt 2>&1'
+            sh 'docker-compose -f docker-compose.prod.yml logs --tail=200 > production-failure-logs.txt 2>&1'
             archiveArtifacts artifacts: 'production-failure-logs.txt', allowEmptyArchive: true
 
             // Sugestão de rollback

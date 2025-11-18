@@ -22,14 +22,14 @@ pipeline {
         stage('Build') {
             steps {
                 echo '========== Build da aplicação =========='
-                bat 'mvn clean compile'
+                sh 'mvn clean compile'
             }
         }
 
         stage('Test') {
             steps {
                 echo '========== Executando Testes =========='
-                bat 'mvn test'
+                sh 'mvn test'
             }
             post {
                 always {
@@ -41,7 +41,7 @@ pipeline {
         stage('Análise PMD') {
             steps {
                 echo '========== Análise de código PMD =========='
-                bat 'mvn pmd:pmd pmd:cpd'
+                sh 'mvn pmd:pmd pmd:cpd'
                 recordIssues(
                     enabledForFailure: true,
                     tools: [
@@ -55,7 +55,7 @@ pipeline {
         stage('Cobertura JaCoCo') {
             steps {
                 echo '========== Relatório de Cobertura =========='
-                bat 'mvn jacoco:prepare-agent test jacoco:report'
+                sh 'mvn jacoco:prepare-agent test jacoco:report'
             }
             post {
                 always {
@@ -73,8 +73,8 @@ pipeline {
             steps {
                 echo '========== Verificando Quality Gate 99% =========='
                 script {
-                    def jacocoReport = bat(
-                        script: 'type target\\site\\jacoco\\index.html | findstr /C:"Total"',
+                    def jacocoReport = sh(
+                        script: 'cat target/site/jacoco/index.html | grep "Total"',
                         returnStdout: true
                     ).trim()
 
@@ -98,7 +98,7 @@ pipeline {
         stage('Package') {
             steps {
                 echo '========== Empacotando aplicação =========='
-                bat 'mvn clean package -DskipTests'
+                sh 'mvn clean package -DskipTests'
             }
             post {
                 success {
@@ -110,8 +110,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo '========== Construindo Imagem Docker =========='
-                bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
             }
         }
 
@@ -120,21 +120,21 @@ pipeline {
                 echo '========== Testando Container =========='
                 script {
                     // Para container anterior se existir
-                    bat "docker stop test-app-${BUILD_NUMBER} 2>nul || echo Container nao existe"
-                    bat "docker rm test-app-${BUILD_NUMBER} 2>nul || echo Container nao existe"
+                    sh "docker stop test-app-${BUILD_NUMBER} 2>/dev/null || echo Container nao existe"
+                    sh "docker rm test-app-${BUILD_NUMBER} 2>/dev/null || echo Container nao existe"
 
                     // Inicia novo container de teste
-                    bat "docker run -d --name test-app-${BUILD_NUMBER} -p 9090:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    sh "docker run -d --name test-app-${BUILD_NUMBER} -p 9090:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}"
 
                     // Aguarda inicialização
                     sleep time: 30, unit: 'SECONDS'
 
                     // Testa se está respondendo
-                    bat 'curl http://localhost:9090/actuator/health || echo "Servico nao respondeu"'
+                    sh 'curl http://localhost:9090/actuator/health || echo "Servico nao respondeu"'
 
                     // Para e remove container de teste
-                    bat "docker stop test-app-${BUILD_NUMBER}"
-                    bat "docker rm test-app-${BUILD_NUMBER}"
+                    sh "docker stop test-app-${BUILD_NUMBER}"
+                    sh "docker rm test-app-${BUILD_NUMBER}"
                 }
             }
         }
@@ -145,11 +145,11 @@ pipeline {
             }
             steps {
                 echo '========== Deploy para Staging =========='
-                bat 'docker-compose -f docker-compose.staging.yml down'
-                bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+                sh 'docker-compose -f docker-compose.staging.yml down'
+                sh 'docker-compose -f docker-compose.staging.yml up -d --no-color'
                 sleep time: 60, unit: 'SECONDS'
-                bat 'docker-compose -f docker-compose.staging.yml ps'
-                bat 'curl http://localhost:8686 || echo "Service not responding"'
+                sh 'docker-compose -f docker-compose.staging.yml ps'
+                sh 'curl http://localhost:8686 || echo "Service not responding"'
             }
         }
 
@@ -163,11 +163,11 @@ pipeline {
             }
             steps {
                 echo '========== Deploy para Produção =========='
-                bat 'docker-compose -f docker-compose.prod.yml down'
-                bat 'docker-compose -f docker-compose.prod.yml up -d --no-color'
+                sh 'docker-compose -f docker-compose.prod.yml down'
+                sh 'docker-compose -f docker-compose.prod.yml up -d --no-color'
                 sleep time: 60, unit: 'SECONDS'
-                bat 'docker-compose -f docker-compose.prod.yml ps'
-                bat 'curl http://localhost:8585 || echo "Service not responding"'
+                sh 'docker-compose -f docker-compose.prod.yml ps'
+                sh 'curl http://localhost:8585 || echo "Service not responding"'
             }
         }
     }
@@ -175,7 +175,7 @@ pipeline {
     post {
         always {
             echo '========== Limpeza =========='
-            bat 'docker system prune -f 2>nul || echo "Nada para limpar"'
+            sh 'docker system prune -f 2>/dev/null || echo "Nada para limpar"'
             echo "Pipeline finalizado: ${currentBuild.currentResult}"
         }
         success {
