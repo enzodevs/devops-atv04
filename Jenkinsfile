@@ -131,7 +131,7 @@ pipeline {
                     sleep time: 30, unit: 'SECONDS'
 
                     // Testa se está respondendo
-                    sh 'curl http://localhost:9090/actuator/health || echo "Servico nao respondeu"'
+                    sh 'curl http://host.docker.internal:9090/actuator/health || echo "Servico nao respondeu"'
 
                     // Para e remove container de teste
                     sh "docker stop test-app-${BUILD_NUMBER}"
@@ -150,7 +150,7 @@ pipeline {
                 sh 'docker-compose -f docker-compose.staging.yml up -d --no-color'
                 sleep time: 60, unit: 'SECONDS'
                 sh 'docker-compose -f docker-compose.staging.yml ps'
-                sh 'curl http://localhost:8686 || echo "Service not responding"'
+                sh 'curl http://host.docker.internal:8686 || echo "Service not responding"'
             }
         }
 
@@ -168,7 +168,7 @@ pipeline {
                 sh 'docker-compose -f docker-compose.prod.yml up -d --no-color'
                 sleep time: 60, unit: 'SECONDS'
                 sh 'docker-compose -f docker-compose.prod.yml ps'
-                sh 'curl http://localhost:8585 || echo "Service not responding"'
+                sh 'curl http://host.docker.internal:8585 || echo "Service not responding"'
             }
         }
     }

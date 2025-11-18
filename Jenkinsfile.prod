@@ -74,7 +74,7 @@ pipeline {
 
                     while (retryCount < maxRetries && !healthy) {
                         try {
-                            sh 'curl -f http://localhost:8585/actuator/health'
+                            sh 'curl -f http://host.docker.internal:8585/actuator/health'
                             healthy = true
                             echo '✅ Serviço em produção está saudável!'
                         } catch (Exception e) {
@@ -108,7 +108,7 @@ pipeline {
 
                     endpoints.each { endpoint ->
                         try {
-                            sh "curl -f http://localhost:8585${endpoint}"
+                            sh "curl -f http://host.docker.internal:8585${endpoint}"
                             echo "✅ Endpoint ${endpoint} OK"
                         } catch (Exception e) {
                             echo "⚠️ Endpoint ${endpoint} não respondeu"
@@ -126,7 +126,7 @@ pipeline {
                 script {
                     // Teste simples de latência
                     def responseTime = sh(
-                        script: 'curl -o /dev/null -s -w "%{time_total}" http://localhost:8585/actuator/health',
+                        script: 'curl -o /dev/null -s -w "%{time_total}" http://host.docker.internal:8585/actuator/health',
                         returnStdout: true
                     ).trim()
 
@@ -149,9 +149,9 @@ pipeline {
         }
         success {
             echo '✅ Deploy em PRODUÇÃO realizado com sucesso!'
-            echo '🚀 Aplicação em produção disponível em: http://localhost:8585'
-            echo '📚 Swagger UI: http://localhost:8585/swagger-ui.html'
-            echo '🔍 Monitoramento: http://localhost:8585/actuator'
+            echo '🚀 Aplicação em produção disponível em: http://host.docker.internal:8585'
+            echo '📚 Swagger UI: http://host.docker.internal:8585/swagger-ui.html'
+            echo '🔍 Monitoramento: http://host.docker.internal:8585/actuator'
 
             // Limpa imagens de backup antigas (mantém apenas as últimas 3)
             sh 'docker images --filter "reference=facens/atividade4:backup-*" --format "{{.Tag}}" | sort -r | tail -n +4 | xargs -I {} docker rmi facens/atividade4:{} 2>/dev/null || true'

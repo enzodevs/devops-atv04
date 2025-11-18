@@ -56,7 +56,7 @@ pipeline {
 
                     while (retryCount < maxRetries && !healthy) {
                         try {
-                            sh 'curl -f http://localhost:8686/actuator/health'
+                            sh 'curl -f http://host.docker.internal:8686/actuator/health'
                             healthy = true
                             echo 'Serviço está saudável!'
                         } catch (Exception e) {
@@ -80,8 +80,8 @@ pipeline {
                 echo '========== Executando testes básicos =========='
 
                 // Testa endpoints principais
-                sh 'curl http://localhost:8686/api/alunos || echo "Endpoint alunos não respondeu"'
-                sh 'curl http://localhost:8686/swagger-ui.html || echo "Swagger UI não disponível"'
+                sh 'curl http://host.docker.internal:8686/api/alunos || echo "Endpoint alunos não respondeu"'
+                sh 'curl http://host.docker.internal:8686/swagger-ui.html || echo "Swagger UI não disponível"'
 
                 echo 'Testes de fumaça completados'
             }
@@ -98,8 +98,8 @@ pipeline {
         }
         success {
             echo '✅ Deploy em Staging realizado com sucesso!'
-            echo 'Aplicação disponível em: http://localhost:8686'
-            echo 'Swagger UI: http://localhost:8686/swagger-ui.html'
+            echo 'Aplicação disponível em: http://host.docker.internal:8686'
+            echo 'Swagger UI: http://host.docker.internal:8686/swagger-ui.html'
         }
         failure {
             echo '❌ Deploy em Staging falhou - verificar logs'
