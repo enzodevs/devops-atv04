@@ -1,0 +1,174 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'facens/atividade4'
+        DOCKER_TAG = 'latest'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo 'Código fonte obtido do repositório'
+            }
+        }
+
+        stage('Production Approval') {
+            steps {
+                input message: '⚠️ Deploy em PRODUÇÃO - Tem certeza?',
+                      ok: 'Sim, fazer deploy em produção',
+                      submitter: 'admin,devops'
+            }
+        }
+
+        stage('Stop Previous Container') {
+            steps {
+                echo '========== Parando container anterior de produção =========='
+                bat 'docker-compose -f docker-compose.prod.yml down || echo "Nenhum container anterior para parar"'
+            }
+        }
+
+        stage('Backup Current State') {
+            steps {
+                echo '========== Criando backup do estado atual =========='
+                script {
+                    // Marca a imagem atual como backup antes de atualizar
+                    bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:backup-${BUILD_NUMBER} || echo 'Sem imagem anterior para backup'"
+                }
+            }
+        }
+
+        stage('Start Production Container') {
+            steps {
+                echo '========== Iniciando container em Produção =========='
+                echo "Usando imagem: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+
+                // Baixa a imagem mais recente (se estiver usando um registry)
+                // bat "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
+
+                // Inicia o container usando docker-compose
+                bat 'docker-compose -f docker-compose.prod.yml up -d --no-color'
+
+                // Aguarda o serviço Spring Boot inicializar
+                sleep time: 60, unit: 'SECONDS'
+
+                // Verifica os logs para conferir o status
+                echo '========== Verificando logs do container =========='
+                bat 'docker-compose -f docker-compose.prod.yml logs --tail=50'
+
+                // Verifica o status do container
+                echo '========== Status do container =========='
+                bat 'docker-compose -f docker-compose.prod.yml ps'
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo '========== Verificando saúde do serviço em produção =========='
+                script {
+                    def maxRetries = 10  // Mais tentativas para produção
+                    def retryCount = 0
+                    def healthy = false
+
+                    while (retryCount < maxRetries && !healthy) {
+                        try {
+                            bat 'curl -f http://localhost:8585/actuator/health'
+                            healthy = true
+                            echo '✅ Serviço em produção está saudável!'
+                        } catch (Exception e) {
+                            retryCount++
+                            if (retryCount < maxRetries) {
+                                echo "Tentativa ${retryCount}/${maxRetries} falhou. Aguardando..."
+                                sleep time: 10, unit: 'SECONDS'
+                            }
+                        }
+                    }
+
+                    if (!healthy) {
+                        error '❌ Serviço em produção não está respondendo após múltiplas tentativas'
+                    }
+                }
+            }
+        }
+
+        stage('Production Smoke Tests') {
+            steps {
+                echo '========== Executando testes de produção =========='
+
+                // Testa endpoints principais
+                script {
+                    def endpoints = [
+                        '/api/alunos',
+                        '/actuator/health',
+                        '/actuator/info',
+                        '/swagger-ui.html'
+                    ]
+
+                    endpoints.each { endpoint ->
+                        try {
+                            bat "curl -f http://localhost:8585${endpoint}"
+                            echo "✅ Endpoint ${endpoint} OK"
+                        } catch (Exception e) {
+                            echo "⚠️ Endpoint ${endpoint} não respondeu"
+                        }
+                    }
+                }
+
+                echo 'Testes de produção completados'
+            }
+        }
+
+        stage('Performance Check') {
+            steps {
+                echo '========== Verificando performance básica =========='
+                script {
+                    // Teste simples de latência
+                    def responseTime = bat(
+                        script: 'curl -o nul -s -w "%%{time_total}" http://localhost:8585/actuator/health',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Tempo de resposta: ${responseTime} segundos"
+
+                    // Verifica uso de memória do container
+                    bat 'docker stats --no-stream --format "table {{.Container}}\\t{{.CPUPerc}}\\t{{.MemUsage}}" atividade4-prod'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '========== Pipeline Produção Finalizado =========='
+            echo "Status: ${currentBuild.currentResult}"
+
+            // Mostra informações do container
+            bat 'docker ps --filter "name=atividade4-prod" --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" || echo "Container info não disponível"'
+        }
+        success {
+            echo '✅ Deploy em PRODUÇÃO realizado com sucesso!'
+            echo '🚀 Aplicação em produção disponível em: http://localhost:8585'
+            echo '📚 Swagger UI: http://localhost:8585/swagger-ui.html'
+            echo '🔍 Monitoramento: http://localhost:8585/actuator'
+
+            // Limpa imagens de backup antigas (mantém apenas as últimas 3)
+            bat 'for /f "skip=3" %%i in (\'docker images --filter "reference=facens/atividade4:backup-*" --format "{{.Tag}}" ^| sort /r\') do docker rmi facens/atividade4:%%i 2>nul'
+        }
+        failure {
+            echo '❌ Deploy em PRODUÇÃO falhou!'
+            echo '🔄 Considere fazer rollback para versão anterior'
+
+            // Captura logs detalhados em caso de falha
+            bat 'docker-compose -f docker-compose.prod.yml logs --tail=200 > production-failure-logs.txt 2>&1'
+            archiveArtifacts artifacts: 'production-failure-logs.txt', allowEmptyArchive: true
+
+            // Sugestão de rollback
+            echo "Para rollback, execute: docker tag ${DOCKER_IMAGE}:backup-${BUILD_NUMBER} ${DOCKER_IMAGE}:latest"
+            echo "E depois reinicie o container com docker-compose -f docker-compose.prod.yml up -d"
+        }
+        unstable {
+            echo '⚠️ Deploy em produção concluído mas com avisos'
+        }
+    }
+}

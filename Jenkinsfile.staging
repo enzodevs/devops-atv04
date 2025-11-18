@@ -1,0 +1,111 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'facens/atividade4'
+        DOCKER_TAG = 'latest'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo 'Código fonte obtido do repositório'
+            }
+        }
+
+        stage('Stop Previous Container') {
+            steps {
+                echo '========== Parando container anterior =========='
+                bat 'docker-compose -f docker-compose.staging.yml down || echo "Nenhum container anterior para parar"'
+            }
+        }
+
+        stage('Start Staging Container') {
+            steps {
+                echo '========== Iniciando container Staging =========='
+                echo "Usando imagem: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+
+                // Baixa a imagem mais recente (se estiver usando um registry)
+                // bat "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
+
+                // Inicia o container usando docker-compose
+                bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+
+                // Aguarda o serviço Spring Boot inicializar
+                sleep time: 60, unit: 'SECONDS'
+
+                // Verifica os logs para conferir o status
+                echo '========== Verificando logs do container =========='
+                bat 'docker-compose -f docker-compose.staging.yml logs --tail=50'
+
+                // Verifica o status do container
+                echo '========== Status do container =========='
+                bat 'docker-compose -f docker-compose.staging.yml ps'
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo '========== Verificando saúde do serviço =========='
+                script {
+                    def maxRetries = 5
+                    def retryCount = 0
+                    def healthy = false
+
+                    while (retryCount < maxRetries && !healthy) {
+                        try {
+                            bat 'curl -f http://localhost:8686/actuator/health'
+                            healthy = true
+                            echo 'Serviço está saudável!'
+                        } catch (Exception e) {
+                            retryCount++
+                            if (retryCount < maxRetries) {
+                                echo "Tentativa ${retryCount}/${maxRetries} falhou. Aguardando..."
+                                sleep time: 10, unit: 'SECONDS'
+                            }
+                        }
+                    }
+
+                    if (!healthy) {
+                        error 'Serviço não está respondendo após múltiplas tentativas'
+                    }
+                }
+            }
+        }
+
+        stage('Smoke Tests') {
+            steps {
+                echo '========== Executando testes básicos =========='
+
+                // Testa endpoints principais
+                bat 'curl http://localhost:8686/api/alunos || echo "Endpoint alunos não respondeu"'
+                bat 'curl http://localhost:8686/swagger-ui.html || echo "Swagger UI não disponível"'
+
+                echo 'Testes de fumaça completados'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '========== Pipeline Staging Finalizado =========='
+            echo "Status: ${currentBuild.currentResult}"
+
+            // Mostra informações do container
+            bat 'docker ps --filter "name=atividade4-staging" --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" || echo "Container info não disponível"'
+        }
+        success {
+            echo '✅ Deploy em Staging realizado com sucesso!'
+            echo 'Aplicação disponível em: http://localhost:8686'
+            echo 'Swagger UI: http://localhost:8686/swagger-ui.html'
+        }
+        failure {
+            echo '❌ Deploy em Staging falhou - verificar logs'
+
+            // Captura logs detalhados em caso de falha
+            bat 'docker-compose -f docker-compose.staging.yml logs --tail=100 > staging-failure-logs.txt 2>&1'
+            archiveArtifacts artifacts: 'staging-failure-logs.txt', allowEmptyArchive: true
+        }
+    }
+}
