@@ -9,6 +9,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'facens/atividade4'
         DOCKER_TAG = "${BUILD_NUMBER}"
+        DOCKER_HOST = 'tcp://host.docker.internal:2375'
     }
 
     stages {
