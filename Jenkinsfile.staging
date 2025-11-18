@@ -56,7 +56,7 @@ pipeline {
 
                     while (retryCount < maxRetries && !healthy) {
                         try {
-                            sh 'curl -f http://host.docker.internal:8686/actuator/health'
+                            sh 'curl -f http://host.docker.internal:8686/api/alunos'
                             healthy = true
                             echo 'Serviço está saudável!'
                         } catch (Exception e) {
