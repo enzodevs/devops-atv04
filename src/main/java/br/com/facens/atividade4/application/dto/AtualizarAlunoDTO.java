@@ -2,6 +2,7 @@ package br.com.facens.atividade4.application.dto;
 
 import br.com.facens.atividade4.domain.ContatoEmail;
 import br.com.facens.atividade4.domain.TipoAssinatura;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,17 +14,21 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@Schema(description = "Dados para atualizar um aluno existente")
 public class AtualizarAlunoDTO {
-    @NotBlank
-    @Size(max = 120)
+    @NotBlank(message = "Nome é obrigatório")
+    @Size(max = 120, message = "Nome deve ter no máximo 120 caracteres")
+    @Schema(description = "Nome completo do aluno", example = "João Silva Atualizado", required = true, maxLength = 120)
     private String nome;
 
-    @NotBlank
-    @Email
-    @Size(max = 120)
+    @NotBlank(message = "Email é obrigatório")
+    @Email(message = "Email deve ser válido")
+    @Size(max = 120, message = "Email deve ter no máximo 120 caracteres")
+    @Schema(description = "E-mail do aluno", example = "joao.novo@email.com", required = true, format = "email", maxLength = 120)
     private String email;
 
-    @NotNull
+    @NotNull(message = "Tipo de assinatura é obrigatório")
+    @Schema(description = "Tipo de assinatura do aluno", example = "PREMIUM", required = true, enumAsRef = true)
     private TipoAssinatura assinatura;
 
     public ContatoEmail contatoEmail() {
