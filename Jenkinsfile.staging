@@ -17,7 +17,7 @@ pipeline {
         stage('Stop Previous Container') {
             steps {
                 echo '========== Parando container anterior =========='
-                sh 'docker-compose -f docker-compose.staging.yml down || echo "Nenhum container anterior para parar"'
+                sh 'docker compose -f docker-compose.staging.yml down || echo "Nenhum container anterior para parar"'
             }
         }
 
@@ -30,18 +30,18 @@ pipeline {
                 // sh "docker pull ${DOCKER_IMAGE}:${DOCKER_TAG} || echo 'Usando imagem local'"
 
                 // Inicia o container usando docker-compose
-                sh 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+                sh 'docker compose -f docker-compose.staging.yml up -d --no-color'
 
                 // Aguarda o serviço Spring Boot inicializar
                 sleep time: 60, unit: 'SECONDS'
 
                 // Verifica os logs para conferir o status
                 echo '========== Verificando logs do container =========='
-                sh 'docker-compose -f docker-compose.staging.yml logs --tail=50'
+                sh 'docker compose -f docker-compose.staging.yml logs --tail=50'
 
                 // Verifica o status do container
                 echo '========== Status do container =========='
-                sh 'docker-compose -f docker-compose.staging.yml ps'
+                sh 'docker compose -f docker-compose.staging.yml ps'
             }
         }
 
@@ -104,7 +104,7 @@ pipeline {
             echo '❌ Deploy em Staging falhou - verificar logs'
 
             // Captura logs detalhados em caso de falha
-            sh 'docker-compose -f docker-compose.staging.yml logs --tail=100 > staging-failure-logs.txt 2>&1'
+            sh 'docker compose -f docker-compose.staging.yml logs --tail=100 > staging-failure-logs.txt 2>&1'
             archiveArtifacts artifacts: 'staging-failure-logs.txt', allowEmptyArchive: true
         }
     }
