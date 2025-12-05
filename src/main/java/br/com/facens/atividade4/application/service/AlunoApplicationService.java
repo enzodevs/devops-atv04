@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class AlunoApplicationService {
 
+    // Orquestra casos de uso: cria/atualiza/remover/finaliza curso; valida email único; aciona gamificação.
     private final AlunoRepository alunoRepository;
     private final ServicoDeCursos servicoDeCursos;
 

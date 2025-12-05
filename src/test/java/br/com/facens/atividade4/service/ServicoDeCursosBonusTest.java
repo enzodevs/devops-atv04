@@ -10,6 +10,7 @@ import br.com.facens.atividade4.domain.Aluno;
 import br.com.facens.atividade4.domain.ContatoEmail;
 import br.com.facens.atividade4.domain.TipoAssinatura;
 
+// Casos extras de bônus: aprovado, reprovado e aluno sem permissão de bônus (spy para negar bônus).
 class ServicoDeCursosBonusTest {
 
     private final ServicoDeCursos servico = new ServicoDeCursos();

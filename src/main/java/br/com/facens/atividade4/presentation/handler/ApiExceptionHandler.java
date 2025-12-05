@@ -15,6 +15,7 @@ import br.com.facens.atividade4.application.exception.EmailAlunoJaCadastradoExce
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+    // Traduz exceções de domínio/validação em respostas HTTP padronizadas (404, 409, 400).
     @ExceptionHandler(AlunoNaoEncontradoException.class)
     public ResponseEntity<ApiErrorResponse> tratarAlunoNaoEncontrado(AlunoNaoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

@@ -17,6 +17,7 @@ import br.com.facens.atividade4.domain.TipoAssinatura;
 @ActiveProfiles("test")
 class AlunoRepositoryTest {
 
+    // Testa persistência JPA e consultas de email no repositório de alunos (perfil test, H2).
     @Autowired
     private AlunoRepository repository;
 

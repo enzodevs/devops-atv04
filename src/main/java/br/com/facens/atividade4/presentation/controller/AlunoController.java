@@ -39,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Alunos", description = "Gerenciamento de alunos com gamificação")
 public class AlunoController {
 
+    // Controller REST que expõe CRUD de alunos e finalização de curso com bônus e mapeia respostas HTTP.
     private final AlunoApplicationService alunoService;
 
     @GetMapping

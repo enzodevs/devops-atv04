@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Value Object que representa e valida o endereço de e-mail de um aluno.
+// * Value Object que representa e valida o endereço de e-mail de um aluno.
  */
 @Getter
 @Embeddable

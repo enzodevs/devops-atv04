@@ -31,6 +31,7 @@ import br.com.facens.atividade4.domain.TipoAssinatura;
 import br.com.facens.atividade4.infrastructure.persistence.AlunoRepository;
 import br.com.facens.atividade4.service.ServicoDeCursos;
 
+// Cobre regras do serviço de aplicação: criação, atualização, duplicidade de email e chamadas ao repositório/serviço de cursos.
 @ExtendWith(MockitoExtension.class)
 class AlunoApplicationServiceTest {
 

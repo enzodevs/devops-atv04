@@ -19,6 +19,7 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
 
+    // Configura o OpenAPI/Swagger para expor documentação e servidores (localhost 8080/8686).
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()

@@ -35,6 +35,7 @@ import br.com.facens.atividade4.presentation.request.FinalizarCursoRequest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.mockito.Mockito;
 
+// Testa o controller via MockMvc: CRUD e finalização de curso retornando status/JSON corretos.
 @WebMvcTest(controllers = AlunoController.class)
 @Import(AlunoControllerTest.ControllerTestConfig.class)
 class AlunoControllerTest {

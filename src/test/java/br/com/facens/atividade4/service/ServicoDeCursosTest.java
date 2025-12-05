@@ -11,6 +11,7 @@ import br.com.facens.atividade4.domain.Aluno;
 import br.com.facens.atividade4.domain.ContatoEmail;
 import br.com.facens.atividade4.domain.TipoAssinatura;
 
+// Exercita regras de gamificação ao finalizar curso: bônus por nota, validações de nota e consistência dos cursos.
 class ServicoDeCursosTest {
 
     private ServicoDeCursos servico;
