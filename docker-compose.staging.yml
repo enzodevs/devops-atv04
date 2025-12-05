@@ -1,21 +1,31 @@
-version: '4'
+version: '3.8'
 
 services:
   database:
-    image: postgres
+    image: postgres:16
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: sapi
     volumes:
-      - db-volume:/var/lib/postgresql/data
+      - db-volume:/var/lib/postgresql
+    networks:
+      - api-network
 
   api:
     image: devops-atv04:latest
     networks:
-      - default  # Certifique-se de que está usando a rede adequada
+      - api-network
     environment:
       DB_HOST: database
+      SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8686:8080"
+    depends_on:
+      - database
+
 volumes:
   db-volume:
+
+networks:
+  api-network:
+    driver: bridge
