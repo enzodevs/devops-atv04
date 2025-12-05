@@ -1,0 +1,5 @@
+# Trivy Ignore File
+
+# Exemplo de CVEs ignorados:
+CVE-2023-12345
+CVE-2022-98765

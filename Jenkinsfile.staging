@@ -15,6 +15,23 @@ pipeline {
             }
         }
 
+        stage('Security Scan - Image (Trivy)') {
+            steps {
+                echo '========== Trivy: Varredura de Segurança Staging =========='
+                sh '''
+                    trivy image --exit-code 1 --severity HIGH,CRITICAL \
+                        --format table --output trivy-staging-report.txt \
+                        devops-atv04:latest
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-staging-report.txt',
+                                     onlyIfSuccessful: false
+                }
+            }
+        }
+
         stage('Stop Previous Container') {
             steps {
                 echo '========== Parando container anterior =========='

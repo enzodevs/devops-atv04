@@ -23,6 +23,23 @@ pipeline {
             }
         }
 
+        stage('Security Scan - Image (Trivy)') {
+            steps {
+                echo '========== Trivy: Varredura de Segurança PRODUÇÃO =========='
+                sh """
+                    trivy image --exit-code 1 --severity HIGH,CRITICAL \
+                        --format table --output trivy-prod-report.txt \
+                        ${DOCKER_IMAGE}:${DOCKER_TAG}
+                """
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-prod-report.txt',
+                                     onlyIfSuccessful: false
+                }
+            }
+        }
+
         stage('Stop Previous Container') {
             steps {
                 echo '========== Parando container anterior de produção =========='

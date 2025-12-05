@@ -1,0 +1,19 @@
+# Trivy Configuration File
+# Define os parâmetros padrão para execução do Trivy
+
+severity:
+  - CRITICAL
+  - HIGH
+
+vuln-type:
+  - os
+  - library
+
+# Ignora vulnerabilidades sem correção disponível
+ignore-unfixed: true
+
+# Formato de saída padrão
+format: table
+
+# Timeout para scan
+timeout: 5m

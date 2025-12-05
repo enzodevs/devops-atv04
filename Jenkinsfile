@@ -116,6 +116,39 @@ pipeline {
             }
         }
 
+        stage('Trivy Scan - Filesystem') {
+            steps {
+                echo '========== Trivy: Varredura de Dependências (Filesystem) =========='
+                sh '''
+                    trivy fs --exit-code 1 --severity HIGH,CRITICAL \
+                        --format table --output trivy-fs-report.txt .
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-fs-report.txt',
+                                     onlyIfSuccessful: false
+                }
+            }
+        }
+
+        stage('Trivy Scan - Image') {
+            steps {
+                echo '========== Trivy: Varredura da Imagem Docker =========='
+                sh """
+                    trivy image --exit-code 1 --severity HIGH,CRITICAL \
+                        --format table --output trivy-image-report.txt \
+                        ${DOCKER_IMAGE}:${DOCKER_TAG}
+                """
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-image-report.txt',
+                                     onlyIfSuccessful: false
+                }
+            }
+        }
+
         stage('Test Container') {
             steps {
                 echo '========== Testando Container =========='
